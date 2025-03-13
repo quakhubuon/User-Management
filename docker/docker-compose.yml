@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  # 🔥 MySQL Database
+  # MySQL Database
   db:
     image: mysql:8.0
     container_name: mysql_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root   # Đổi mật khẩu theo .env
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: user_management
       MYSQL_USER: user
       MYSQL_PASSWORD: password
@@ -18,7 +18,7 @@ services:
     networks:
       - app_network
 
-  # 🔥 phpMyAdmin để quản lý DB dễ hơn
+  # phpMyAdmin để quản lý DB dễ hơn
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin
@@ -34,10 +34,10 @@ services:
     networks:
       - app_network
 
-  # 🔥 Laravel Backend (PHP 8.2 + Apache)
+  # Laravel Backend (PHP 8.2 + Apache)
   backend:
     build:
-      context: ../backend   # Cập nhật đường dẫn build
+      context: ../backend
       dockerfile: Dockerfile
     container_name: laravel_backend
     restart: always
@@ -53,24 +53,40 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ../backend:/var/www/html  # Cập nhật đường dẫn volume
+      - ../backend:/var/www/html
     networks:
       - app_network
 
-  # 🔥 React Frontend (Vite)
+  # React Frontend (Vite)
   frontend:
     build:
-      context: ../frontend   # Cập nhật đường dẫn build
+      context: ../frontend
       dockerfile: Dockerfile
     container_name: react_frontend
     restart: always
     depends_on:
       - backend
     ports:
-      - "5173:5173"   
+      - "5173:5173"
     volumes:
-      - ../frontend:/app  # Cập nhật đường dẫn volume
+      - ../frontend:/app
       - /app/node_modules
+    networks:
+      - app_network
+
+  # Jenkins CI/CD
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: always
+    privileged: true  # Cho phép Jenkins truy cập Docker daemon
+    user: root
+    ports:
+      - "8080:8080"  # Truy cập Jenkins qua http://localhost:8080
+      - "50000:50000"  # Để hỗ trợ kết nối với agents
+    volumes:
+      - jenkins_home:/var/jenkins_home  # Lưu dữ liệu Jenkins
+      - /var/run/docker.sock:/var/run/docker.sock  # Cho phép Jenkins dùng Docker
     networks:
       - app_network
 
@@ -80,3 +96,4 @@ networks:
 
 volumes:
   mysql_data:
+  jenkins_home:
