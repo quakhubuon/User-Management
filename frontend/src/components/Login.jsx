@@ -14,10 +14,18 @@ function Login() {
     setMessage('');
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/login`,
+        {
+          email,
+          password,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       setMessage('Đăng nhập thành công!');
       localStorage.setItem('token', response.data.token);
       navigate('/profile');
