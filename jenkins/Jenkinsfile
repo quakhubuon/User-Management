@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    environment {
+        DB_HOST = "db"
+        DB_PORT = "3306"
+        DB_DATABASE = "user_management"
+        DB_USERNAME = "root"
+        DB_PASSWORD = "root"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/quakhubuon/User-Management.git'
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                sh 'docker-compose -f docker/docker-compose.yml build'
+            }
+        }
+
+        stage('Run Containers') {
+            steps {
+                sh 'docker-compose -f docker/docker-compose.yml up -d'
+            }
+        }
+
+        stage('Database Migration') {
+            steps {
+                sh 'docker exec laravel_backend php artisan migrate'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment Successful!'
+        }
+        failure {
+            echo 'Deployment Failed!'
+        }
+    }
+}

@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # 🔥 MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root   # Đổi mật khẩu theo .env
+      MYSQL_DATABASE: user_management
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+
+  # 🔥 phpMyAdmin để quản lý DB dễ hơn
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "9090:80"
+    networks:
+      - app_network
+
+  # 🔥 Laravel Backend (PHP 8.2 + Apache)
+  backend:
+    build:
+      context: ../backend   # Cập nhật đường dẫn build
+      dockerfile: Dockerfile
+    container_name: laravel_backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - APP_ENV=local
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=user_management
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend:/var/www/html  # Cập nhật đường dẫn volume
+    networks:
+      - app_network
+
+  # 🔥 React Frontend (Vite)
+  frontend:
+    build:
+      context: ../frontend   # Cập nhật đường dẫn build
+      dockerfile: Dockerfile
+    container_name: react_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"   
+    volumes:
+      - ../frontend:/app  # Cập nhật đường dẫn volume
+      - /app/node_modules
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
