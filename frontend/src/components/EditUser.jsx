@@ -24,7 +24,7 @@ function UpdateUser() {
 
       try {
         // Kiểm tra role admin
-        const profileResponse = await axios.get('http://127.0.0.1:8000/api/profile', {
+        const profileResponse = await axios.get(`${API_BASE_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
