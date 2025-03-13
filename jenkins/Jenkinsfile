@@ -16,14 +16,14 @@ pipeline {
                     // Kiểm tra xem docker-compose đã cài chưa, nếu chưa thì cài
                     def dockerComposeExists = sh(script: 'command -v docker-compose', returnStatus: true) == 0
                     if (!dockerComposeExists) {
-                        echo 'docker-compose not found, installing...'
-                        sh 'curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose'
-                        sh 'chmod +x /usr/local/bin/docker-compose'
+                        echo 'docker-compose not found, installing locally...'
+                        sh 'curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose'
+                        sh 'chmod +x ./docker-compose'
                     } else {
                         echo 'docker-compose already installed'
                     }
-                    // Xác nhận phiên bản
-                    sh 'docker-compose --version'
+                    // Kiểm tra phiên bản, ưu tiên ./docker-compose nếu vừa cài
+                    sh './docker-compose --version || docker-compose --version'
                 }
             }
         }
@@ -36,13 +36,13 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                sh 'docker-compose -f docker/docker-compose.yml build'
+                sh './docker-compose -f docker/docker-compose.yml build || docker-compose -f docker/docker-compose.yml build'
             }
         }
 
         stage('Run Containers') {
             steps {
-                sh 'docker-compose -f docker/docker-compose.yml up -d'
+                sh './docker-compose -f docker/docker-compose.yml up -d || docker-compose -f docker/docker-compose.yml up -d'
             }
         }
 
