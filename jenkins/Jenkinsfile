@@ -10,6 +10,24 @@ pipeline {
     }
 
     stages {
+        stage('Setup Environment') {
+            steps {
+                script {
+                    // Kiểm tra xem docker-compose đã cài chưa, nếu chưa thì cài
+                    def dockerComposeExists = sh(script: 'command -v docker-compose', returnStatus: true) == 0
+                    if (!dockerComposeExists) {
+                        echo 'docker-compose not found, installing...'
+                        sh 'curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose'
+                        sh 'chmod +x /usr/local/bin/docker-compose'
+                    } else {
+                        echo 'docker-compose already installed'
+                    }
+                    // Xác nhận phiên bản
+                    sh 'docker-compose --version'
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/quakhubuon/User-Management.git'
