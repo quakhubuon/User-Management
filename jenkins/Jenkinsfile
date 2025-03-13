@@ -2,63 +2,58 @@ pipeline {
     agent any
 
     environment {
-        DB_HOST = "db"
-        DB_PORT = "3306"
-        DB_DATABASE = "user_management"
-        DB_USERNAME = "root"
-        DB_PASSWORD = "root"
+        BACKEND_IMAGE = 'tranminh2014.tm@gmail.com/docker-backend'
+        FRONTEND_IMAGE = 'tranminh2014.tm@gmail.com/docker-frontend '
     }
 
     stages {
-        stage('Setup Environment') {
-            steps {
-                script {
-                    // Kiểm tra xem docker-compose đã cài chưa, nếu chưa thì cài
-                    def dockerComposeExists = sh(script: 'command -v docker-compose', returnStatus: true) == 0
-                    if (!dockerComposeExists) {
-                        echo 'docker-compose not found, installing locally...'
-                        sh 'curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose'
-                        sh 'chmod +x ./docker-compose'
-                    } else {
-                        echo 'docker-compose already installed'
-                    }
-                    // Kiểm tra phiên bản, ưu tiên ./docker-compose nếu vừa cài
-                    sh './docker-compose --version || docker-compose --version'
-                }
-            }
-        }
-
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/quakhubuon/User-Management.git'
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Build Backend') {
             steps {
-                sh './docker-compose -f docker/docker-compose.yml build || docker-compose -f docker/docker-compose.yml build'
+                dir('backend') {
+                    sh 'docker build -t ${BACKEND_IMAGE} .'
+                }
             }
         }
 
-        stage('Run Containers') {
+        stage('Build Frontend') {
             steps {
-                sh './docker-compose -f docker/docker-compose.yml up -d || docker-compose -f docker/docker-compose.yml up -d'
+                dir('frontend') {
+                    sh 'docker build -t ${FRONTEND_IMAGE} .'
+                }
             }
         }
 
-        stage('Database Migration') {
+        stage('Push Docker Images') {
             steps {
-                sh 'docker exec laravel_backend php artisan migrate'
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                    sh 'docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD}'
+                    sh 'docker tag ${BACKEND_IMAGE} ${DOCKER_HUB_USER}/${BACKEND_IMAGE}:latest'
+                    sh 'docker tag ${FRONTEND_IMAGE} ${DOCKER_HUB_USER}/${FRONTEND_IMAGE}:latest'
+                    sh 'docker push ${DOCKER_HUB_USER}/${BACKEND_IMAGE}:latest'
+                    sh 'docker push ${DOCKER_HUB_USER}/${FRONTEND_IMAGE}:latest'
+                }
+            }
+        }
+
+        stage('Run Docker Compose') {
+            steps {
+                sh 'docker-compose down && docker-compose up -d'
             }
         }
     }
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Deployment Failed!'
+            echo 'Pipeline failed!'
         }
     }
 }
