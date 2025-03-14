@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
-        RAILWAY_TOKEN = credentials('railway-token') // Lấy token từ Jenkins Credentials
+        IMAGE_BACKEND = "tranminh2/user-management-backend"
+        IMAGE_FRONTEND = "tranminh2/user-management-frontend"
+        DOCKER_COMPOSE_PATH = "docker/docker-compose.yml"
     }
 
     stages {
@@ -14,7 +16,10 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                sh 'docker-compose -f docker/docker-compose.yml build'
+                sh """
+                    docker build -t $IMAGE_BACKEND ./backend
+                    docker build -t $IMAGE_FRONTEND ./frontend
+                """
             }
         }
 
@@ -23,8 +28,8 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker tag user-management_backend $DOCKER_USER/user-management-backend:latest
-                        docker tag user-management_frontend $DOCKER_USER/user-management-frontend:latest
+                        docker tag $IMAGE_BACKEND $DOCKER_USER/user-management-backend:latest
+                        docker tag $IMAGE_FRONTEND $DOCKER_USER/user-management-frontend:latest
                         docker push $DOCKER_USER/user-management-backend:latest
                         docker push $DOCKER_USER/user-management-frontend:latest
                     """
@@ -34,11 +39,10 @@ pipeline {
 
         stage('Deploy to Railway') {
             steps {
-                withCredentials([string(credentialsId: 'railway-token', variable: 'RAILWAY_TOKEN')]) {
+                withCredentials([string(credentialsId: 'RAILWAY_TOKEN', variable: 'RAILWAY_TOKEN')]) {
                     sh """
-                        railway link --token $RAILWAY_TOKEN
-                        railway up --service backend
-                        railway up --service frontend
+                        railway up --service backend --token $RAILWAY_TOKEN
+                        railway up --service frontend --token $RAILWAY_TOKEN
                     """
                 }
             }
@@ -47,10 +51,10 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment thành công!'
+            echo "✅ Deployment thành công!"
         }
         failure {
-            echo 'Deployment thất bại!'
+            echo "❌ Deployment thất bại!"
         }
     }
 }
