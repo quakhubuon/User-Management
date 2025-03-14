@@ -14,6 +14,18 @@ pipeline {
             }
         }
 
+        stage('Run Backend Unit Tests') {
+            steps {
+                dir('backend') {
+                    sh """
+                        composer install --optimize-autoloader --no-dev
+                        php artisan config:clear
+                        php artisan test
+                    """
+                }
+            }
+        }
+
         stage('Build Docker Images') {
             steps {
                 sh """
@@ -51,10 +63,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment thành công!"
+            echo "Deployment thành công!"
         }
         failure {
-            echo "❌ Deployment thất bại!"
+            echo "Deployment thất bại!"
         }
     }
 }
