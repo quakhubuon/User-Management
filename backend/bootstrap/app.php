@@ -14,6 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        
+        // Đăng ký global middleware (CORS middleware nên ở đây)
+        $middleware->append([
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
+
+        // Đăng ký middleware alias
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
