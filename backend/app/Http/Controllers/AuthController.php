@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Validator;
+use Spatie\Permission\Models\Role;
   
   
 class AuthController extends Controller
