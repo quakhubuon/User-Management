@@ -37,19 +37,6 @@ pipeline {
             }
         }
 
-        stage('Deploy to Railway') {
-            steps {
-                withCredentials([string(credentialsId: 'railway-token', variable: 'RAILWAY_TOKEN')]) {
-                    sh '''
-                        echo "Checking Railway Token..."
-                        echo "$RAILWAY_TOKEN" | railway login
-                        railway link
-                        railway up --service backend
-                        railway up --service frontend
-                    '''
-                }
-            }
-        }
     }
 
     post {
