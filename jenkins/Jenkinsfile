@@ -40,10 +40,12 @@ pipeline {
         stage('Deploy to Railway') {
             steps {
                 withCredentials([string(credentialsId: 'railway-token', variable: 'RAILWAY_TOKEN')]) {
-                    sh """
-                        railway up --service backend --token $RAILWAY_TOKEN
-                        railway up --service frontend --token $RAILWAY_TOKEN
-                    """
+                    withEnv(["RAILWAY_TOKEN=$RAILWAY_TOKEN"]) {
+                        sh """
+                            railway up --service backend
+                            railway up --service frontend
+                        """
+                    }
                 }
             }
         }
