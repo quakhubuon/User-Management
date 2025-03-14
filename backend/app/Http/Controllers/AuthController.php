@@ -34,6 +34,9 @@ class AuthController extends Controller
         $user->email = request()->email;
         $user->password = bcrypt(request()->password);
         $user->save();
+
+        // Gán role mặc định là 'user'
+        $user->assignRole('user');
   
         return response()->json($user, 201);
     }
