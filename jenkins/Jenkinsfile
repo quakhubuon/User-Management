@@ -8,41 +8,33 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                script {
-                    git branch: 'main', url: 'https://github.com/quakhubuon/User-Management.git'
-                }
+                git branch: 'main', url: 'https://github.com/quakhubuon/User-Management.git'
             }
         }
 
         stage('Build Docker Images') {
             steps {
-                script {
-                    sh 'docker-compose -f docker/docker-compose.yml build'
-                }
+                sh 'docker-compose -f docker/docker-compose.yml build'
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin || exit 1
-                            
-                            docker tag user-management_backend $DOCKER_USER/user-management-backend:latest
-                            docker tag user-management_frontend $DOCKER_USER/user-management-frontend:latest
-                            
-                            docker push $DOCKER_USER/user-management-backend:latest
-                            docker push $DOCKER_USER/user-management-frontend:latest
-                        """
-                    }
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker tag user-management_backend $DOCKER_USER/user-management-backend:latest
+                        docker tag user-management_frontend $DOCKER_USER/user-management-frontend:latest
+                        docker push $DOCKER_USER/user-management-backend:latest
+                        docker push $DOCKER_USER/user-management-frontend:latest
+                    """
                 }
             }
         }
 
         stage('Deploy to Railway') {
             steps {
-                script {
+                withCredentials([string(credentialsId: 'railway-token', variable: 'RAILWAY_TOKEN')]) {
                     sh """
                         railway link --token $RAILWAY_TOKEN
                         railway up --service backend
@@ -58,7 +50,7 @@ pipeline {
             echo 'Deployment thành công!'
         }
         failure {
-            echo 'Deployment thất bại! Kiểm tra lại logs để xem lỗi chi tiết.'
+            echo 'Deployment thất bại!'
         }
     }
 }
