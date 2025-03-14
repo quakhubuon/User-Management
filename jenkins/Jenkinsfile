@@ -42,7 +42,9 @@ pipeline {
                 withCredentials([string(credentialsId: 'railway-token', variable: 'RAILWAY_TOKEN')]) {
                     withEnv(["RAILWAY_TOKEN=$RAILWAY_TOKEN"]) {
                         sh """
+                            railway add backend
                             railway up --service backend
+                            railway add backend
                             railway up --service frontend
                         """
                     }
