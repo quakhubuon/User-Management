@@ -27,9 +27,11 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin || exit 1
+                            
                             docker tag user-management_backend $DOCKER_USER/user-management-backend:latest
                             docker tag user-management_frontend $DOCKER_USER/user-management-frontend:latest
+                            
                             docker push $DOCKER_USER/user-management-backend:latest
                             docker push $DOCKER_USER/user-management-frontend:latest
                         """
@@ -56,7 +58,7 @@ pipeline {
             echo 'Deployment thành công!'
         }
         failure {
-            echo 'Deployment thất bại!'
+            echo 'Deployment thất bại! Kiểm tra lại logs để xem lỗi chi tiết.'
         }
     }
 }
