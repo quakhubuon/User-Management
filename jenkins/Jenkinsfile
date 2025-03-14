@@ -42,8 +42,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'railway-token', variable: 'RAILWAY_TOKEN')]) {
                     sh '''
                         echo "Checking Railway Token..."
-                        export RAILWAY_TOKEN="$RAILWAY_TOKEN"
-                        railway login --browserless
+                        echo "$RAILWAY_TOKEN" | railway login
                         railway link
                         railway up --service backend
                         railway up --service frontend
