@@ -2,58 +2,61 @@ pipeline {
     agent any
 
     environment {
-        BACKEND_IMAGE = 'tranminh2014/docker-backend'
-        FRONTEND_IMAGE = 'tranminh2014/docker-frontend'
+        RAILWAY_TOKEN = credentials('railway-token') // Lấy token từ Jenkins Credentials
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/quakhubuon/User-Management.git'
-            }
-        }
-
-        stage('Build Backend') {
-            steps {
-                dir('backend') {
-                    sh 'docker build -t ${BACKEND_IMAGE}:latest .'
+                script {
+                    git branch: 'main', url: 'https://github.com/quakhubuon/User-Management.git'
                 }
             }
         }
 
-        stage('Build Frontend') {
+        stage('Build Docker Images') {
             steps {
-                dir('frontend') {
-                    sh 'docker build -t ${FRONTEND_IMAGE}:latest .'
+                script {
+                    sh 'docker-compose -f docker/docker-compose.yml build'
                 }
             }
         }
 
-        stage('Push Docker Images') {
+        stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
-                    sh 'docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASSWORD}'
-                    sh 'docker tag ${BACKEND_IMAGE}:latest ${DOCKER_HUB_USER}/${BACKEND_IMAGE}:latest'
-                    sh 'docker tag ${FRONTEND_IMAGE}:latest ${DOCKER_HUB_USER}/${FRONTEND_IMAGE}:latest'
-                    sh 'docker push ${DOCKER_HUB_USER}/${BACKEND_IMAGE}:latest'
-                    sh 'docker push ${DOCKER_HUB_USER}/${FRONTEND_IMAGE}:latest'
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            docker tag user-management_backend $DOCKER_USER/user-management-backend:latest
+                            docker tag user-management_frontend $DOCKER_USER/user-management-frontend:latest
+                            docker push $DOCKER_USER/user-management-backend:latest
+                            docker push $DOCKER_USER/user-management-frontend:latest
+                        """
+                    }
                 }
             }
         }
 
-        stage('Run Docker Compose') {
+        stage('Deploy to Railway') {
             steps {
-                sh 'docker-compose down && docker-compose up -d'
+                script {
+                    sh """
+                        railway link --token $RAILWAY_TOKEN
+                        railway up --service backend
+                        railway up --service frontend
+                    """
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Deployment thành công!'
         }
         failure {
-            echo 'Pipeline failed!'
+            echo 'Deployment thất bại!'
         }
     }
 }
