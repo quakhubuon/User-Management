@@ -60,7 +60,7 @@ JWT_SECRET="w9kMrSjGj5ybHS7M5dR4TYtOdFln75UZ8v8biAoedlx5eDdWlDIdmiRUZSQNBkrh"
 #### Frontend (.env)
 Chỉnh sửa file `frontend/.env`:
 ```ini
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=https://thriving-charisma-production.up.railway.app
 ```
 
 ### 4.4. Chạy Ứng Dụng với Docker Compose
@@ -73,9 +73,8 @@ Lệnh này sẽ:
 - Chạy database trước khi backend khởi động.
 
 ### 4.5. Truy Cập Ứng Dụng
-- **Backend API**: [http://localhost:8000](http://localhost:8000)
-- **Frontend**: [http://localhost:5173](http://localhost:5173)
-- **phpMyAdmin**: [http://localhost:9090](http://localhost:9090)
+- **Backend API**: [https://user-management-production-f469.up.railway.app/](https://user-management-production-f469.up.railway.app/)
+- **Frontend**: [https://thriving-charisma-production.up.railway.app](https://thriving-charisma-production.up.railway.app)
 
 ## 5. CI/CD với Jenkins
 Jenkins đã được cài đặt trong Docker. Truy cập:
