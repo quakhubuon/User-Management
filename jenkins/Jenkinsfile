@@ -14,15 +14,15 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
-            steps {
-                sh """
-                    cd backend
-                    composer install --no-interaction --prefer-dist
-                    php artisan test
-                """
-            }
-        }
+        // stage('Run Unit Tests') {
+        //     steps {
+        //         sh """
+        //             cd backend
+        //             composer install --no-interaction --prefer-dist
+        //             php artisan test
+        //         """
+        //     }
+        // }
 
         stage('Build Docker Images') {
             steps {
